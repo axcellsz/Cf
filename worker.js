@@ -220,7 +220,7 @@ async function refreshList(){
       errDiv.style.color = 'red';
       const code = j && j._status ? j._status : 'unknown';
       const raw = j && j._raw ? j._raw : JSON.stringify(j);
-      errDiv.textContent = `Error from origin (status ${code}): ${String(raw).slice(0,200)}`;
+      errDiv.textContent = 'Error from origin (status ${code}): ${String(raw).slice(0,200)}';
       listEl.appendChild(errDiv);
       return;
     }
