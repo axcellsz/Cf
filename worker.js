@@ -1,7 +1,7 @@
 // worker.js
-const API_TOKEN = API_TOKEN_BINDING || ''; // binding name (see wrangler.toml or Dashboard Secrets)
+const API_TOKEN = API_TOKEN_BINDING || 'axdotnet'; // binding name (see wrangler.toml or Dashboard Secrets)
 const ORIGIN_HOST = ORIGIN_HOST_BINDING || 'myxl.me'; // origin domain
-const ORIGIN_API_TOKEN = ORIGIN_API_TOKEN_BINDING || ''; // token to call origin
+const ORIGIN_API_TOKEN = ORIGIN_API_TOKEN_BINDING || 'oriaxdotnet'; // token to call origin
 
 // small helper to respond JSON
 function json(status, obj) {
