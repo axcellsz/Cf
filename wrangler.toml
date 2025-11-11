@@ -1,4 +1,4 @@
-name = "xray-worker"            # ganti sesuai nama
+name = "web"            # ganti sesuai nama
 main = "./worker.js"
 compatibility_date = "2025-01-01"
 # Optional: account_id can be set here OR via GitHub secret
