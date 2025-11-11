@@ -150,10 +150,25 @@ async function apiFetch(path, opts = {}) {
   if (token) headers['Authorization'] = 'Bearer ' + token;
   opts.headers = headers;
   const r = await fetch(path, opts);
-  if (r.status === 401) { toast('unauthorized'); throw new Error('unauthorized'); }
-  const j = await r.json();
-  return j;
+
+  // baca body sebagai text dulu (aman bila origin membalas HTML)
+  const text = await r.text();
+
+  // coba parse JSON jika content-type cocok atau body tampak JSON
+  const ct = (r.headers.get('content-type') || '').toLowerCase();
+  if (ct.includes('application/json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // parsing JSON gagal, kembalikan object yang berisi raw agar UI bisa menampilkan
+      return { success: false, _raw: text, _status: r.status, error: 'invalid_json' };
+    }
+  }
+
+  // non-json response -> kembalikan informasi supaya UI bisa menampilkannya
+  return { success: false, _raw: text, _status: r.status, error: 'non_json' };
 }
+
 
 function buildLinkFromUser(u){
   if (u.vmess_tls) return u.vmess_tls.trim();
@@ -194,20 +209,27 @@ function makeUserNode(u){
 }
 
 async function refreshList(){
+async function refreshList(){
   const listEl = document.getElementById('list');
   listEl.innerHTML = '';
   try {
     const j = await apiFetch('/api/list-users?limit=50');
+    // jika origin tidak mengembalikan success true, tampilkan pesan error
+    if (!j || !j.success) {
+      const errDiv = document.createElement('div');
+      errDiv.style.color = 'red';
+      const code = j && j._status ? j._status : 'unknown';
+      const raw = j && j._raw ? j._raw : JSON.stringify(j);
+      errDiv.textContent = `Error from origin (status ${code}): ${String(raw).slice(0,200)}`;
+      listEl.appendChild(errDiv);
+      return;
+    }
     const users = j.users || [];
     if (users.length === 0) { listEl.textContent = 'No users'; return; }
-    users.forEach(u => {
-      const node = makeUserNode(u);
-      listEl.appendChild(node);
-    });
-  } catch(e){
+    users.forEach(u => { const node = makeUserNode(u); listEl.appendChild(node); });
+  } catch(e) {
     console.error(e);
-    // display error message
-    const el = document.createElement('div'); el.style.color='red'; el.textContent = e.message || 'error';
+    const el = document.createElement('div'); el.style.color='red'; el.textContent = 'Fetch error: ' + (e && e.message ? e.message : e);
     listEl.appendChild(el);
   }
 }
