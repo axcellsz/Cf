@@ -60,13 +60,30 @@ const HTML_PAGE = `<!doctype html>
   .wrap{ max-width:820px; margin:12px auto 110px; padding:12px; box-sizing:border-box; }
   header.summary{
     background: linear-gradient(180deg, rgba(56,189,248,0.12), rgba(56,189,248,0.06));
-    border-radius:12px; padding:10px 14px; display:flex; gap:12px; align-items:center; box-shadow: var(--card-shadow);
+    border-radius:12px; padding:10px 14px; display:block; box-shadow: var(--card-shadow);
+    border-bottom:3px solid rgba(0,0,0,0.06); /* underline / garis bawah */
   }
-  .summary-left{ flex:1; }
-  .summary-grid{ display:flex; gap:16px; align-items:center; width:100%; }
-  .sum-row{ display:flex; justify-content:space-between; gap:12px; width:100%; max-width:320px; }
-  .sum-label{ color:var(--muted); font-weight:700; font-size:0.88rem; }
-  .sum-number{ font-weight:800; color:var(--text); text-align:right; font-size:0.95rem; min-width:86px; }
+
+  /* SUMMARY: single-line three columns, label left, number right (aligned) */
+  .summary-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    max-width:900px;
+    box-sizing:border-box;
+  }
+  .summary-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    flex:1;
+  }
+  .sum-left{ flex:0 0 auto; color:var(--muted); font-weight:700; font-size:0.92rem; width:160px; }
+  .sum-colon{ color:var(--muted); font-weight:700; width:18px; text-align:center; }
+  .sum-right{ margin-left:auto; text-align:right; font-weight:900; color:var(--text); min-width:120px; font-size:0.95rem; }
 
   /* Card list */
   .list-card{ margin-top:12px; background:var(--surface); border-radius:12px; padding:10px; box-shadow:var(--card-shadow); min-height:300px; }
@@ -166,16 +183,33 @@ const HTML_PAGE = `<!doctype html>
   @media (max-width:420px){
     .fab{ width:62px; height:62px; font-size:30px; right:12px; bottom:12px; border-radius:10px; }
     .modal{ width:calc(100% - 28px); margin-bottom:10px; padding:12px; border-radius:10px; }
+    .sum-left{ width:120px; font-size:0.86rem; }
+    .sum-right{ font-size:0.9rem; min-width:80px; }
   }
 </style>
 </head>
 <body>
   <div class="wrap" id="app">
     <header class="summary" aria-hidden="false">
-      <div class="summary-grid">
-        <div class="sum-row"><div class="sum-label">Total modal</div><div class="sum-number" id="totalModal">0</div></div>
-        <div class="sum-row"><div class="sum-label">Total penjualan</div><div class="sum-number" id="totalJual">0</div></div>
-        <div class="sum-row"><div class="sum-label">Total Keuntungan</div><div class="sum-number" id="totalUntung">0</div></div>
+      <!-- summary single-line: three items -->
+      <div class="summary-row">
+        <div class="summary-item">
+          <div class="sum-left">Total modal</div>
+          <div class="sum-colon">:</div>
+          <div class="sum-right" id="totalModal">0</div>
+        </div>
+
+        <div class="summary-item">
+          <div class="sum-left">Total penjualan</div>
+          <div class="sum-colon">:</div>
+          <div class="sum-right" id="totalJual">0</div>
+        </div>
+
+        <div class="summary-item">
+          <div class="sum-left">Total Keuntungan</div>
+          <div class="sum-colon">:</div>
+          <div class="sum-right" id="totalUntung">0</div>
+        </div>
       </div>
     </header>
 
@@ -243,10 +277,16 @@ function saveAll(){
   } catch(e){ console.error(e); }
 }
 
-function moneyFormat(n){
+/* moneyDisplay: integer -> thousand separator with dots, fractional -> 2 decimals with dot */
+function moneyDisplay(n){
   if (n === null || n === undefined || isNaN(Number(n))) return '0';
   const num = Number(n);
-  return num.toLocaleString('id-ID');
+  if (Number.isInteger(num)) {
+    // use Indonesian thousand separator (dot)
+    return num.toLocaleString('id-ID').replace(/,/g, '.');
+  } else {
+    return num.toFixed(2);
+  }
 }
 
 function render(){
@@ -270,9 +310,9 @@ function render(){
 
       const meta = document.createElement('div'); meta.className = 'tx-values';
       meta.innerHTML =
-        '<div>Modal : <strong>' + moneyFormat(it.cost) + '</strong></div>' +
-        '<div>Jual  : <strong>' + moneyFormat(it.sell) + '</strong></div>' +
-        '<div>Keuntungan : <strong>' + moneyFormat(it.profit) + '</strong></div>';
+        '<div>Modal : <strong>' + moneyDisplay(it.cost) + '</strong></div>' +
+        '<div>Jual  : <strong>' + moneyDisplay(it.sell) + '</strong></div>' +
+        '<div>Keuntungan : <strong>' + moneyDisplay(it.profit) + '</strong></div>';
 
       left.appendChild(title);
       left.appendChild(meta);
@@ -293,7 +333,7 @@ function render(){
       txList.appendChild(li);
     });
   }
-  // update totals (right-aligned numbers handled by CSS)
+  // update totals
   const totals = items.reduce((acc, it) => {
     acc.cost += Number(it.cost) || 0;
     acc.sell += Number(it.sell) || 0;
@@ -301,9 +341,9 @@ function render(){
     return acc;
   }, {cost:0, sell:0, profit:0});
 
-  totalModalEl.textContent = moneyFormat(totals.cost);
-  totalJualEl.textContent = moneyFormat(totals.sell);
-  totalUntungEl.textContent = moneyFormat(totals.profit);
+  totalModalEl.textContent = moneyDisplay(totals.cost);
+  totalJualEl.textContent = moneyDisplay(totals.sell);
+  totalUntungEl.textContent = moneyDisplay(totals.profit);
 }
 
 function openForm(){
@@ -315,10 +355,8 @@ function openForm(){
   fName.value = '';
   fSell.value = '';
   fCost.value = '';
-  // focus input after slight delay so keyboard appears and modal sits above it
   setTimeout(()=> {
     fName.focus();
-    // try to scroll modal into view (mobile)
     const rect = document.querySelector('.modal').getBoundingClientRect();
     if (rect) window.scrollTo({ top: Math.max(0, rect.top - 20), behavior: 'smooth' });
   }, 120);
@@ -329,7 +367,6 @@ function closeForm(){
   modalWrap.setAttribute('aria-hidden','true');
   // show FAB again
   fab.style.display = 'flex';
-  // blur inputs to close keyboard
   try { fName.blur(); fSell.blur(); fCost.blur(); } catch(e){}
 }
 
