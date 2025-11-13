@@ -1,7 +1,6 @@
 // worker.js
 // Single-file Cloudflare Worker -> UI + client logic (no external deps)
-// Persistance: localStorage (browser)
-// Copy-paste ke Cloudflare Workers (Save & Deploy)
+// Copy-paste to Cloudflare Workers (Save & Deploy)
 
 export default {
   async fetch(request) {
@@ -44,7 +43,7 @@ const HTML_PAGE = `<!doctype html>
     --accent-2: #06b6d4; /* teal */
     --danger: #fb7185;
     --card-shadow: 0 8px 24px rgba(9,30,63,0.06);
-    --radius: 14px;
+    --radius: 12px;
   }
   html,body{
     height:100%;
@@ -54,52 +53,54 @@ const HTML_PAGE = `<!doctype html>
     color:var(--text);
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    font-size:15px;
+    font-size:14px;
   }
 
   /* Layout */
   .wrap{ max-width:820px; margin:12px auto 110px; padding:12px; box-sizing:border-box; }
   header.summary{
     background: linear-gradient(180deg, rgba(56,189,248,0.12), rgba(56,189,248,0.06));
-    border-radius:12px; padding:12px 18px; display:flex; gap:16px; align-items:center; box-shadow: var(--card-shadow);
+    border-radius:12px; padding:10px 14px; display:flex; gap:12px; align-items:center; box-shadow: var(--card-shadow);
   }
   .summary-left{ flex:1; }
-  .summary-row{ display:flex; gap:12px; align-items:center; }
-  .sum-list{ list-style:none; padding:0; margin:0; display:flex; gap:22px; flex-wrap:wrap; }
-  .sum-list li{ color:var(--muted); font-size:0.95rem; }
-  .sum-label{ color:var(--muted); font-weight:600; margin-right:6px; }
-  .sum-number{ font-weight:800; color:var(--text); }
+  .summary-grid{ display:flex; gap:16px; align-items:center; width:100%; }
+  .sum-row{ display:flex; justify-content:space-between; gap:12px; width:100%; max-width:320px; }
+  .sum-label{ color:var(--muted); font-weight:700; font-size:0.88rem; }
+  .sum-number{ font-weight:800; color:var(--text); text-align:right; font-size:0.95rem; min-width:86px; }
 
   /* Card list */
-  .list-card{ margin-top:14px; background:var(--surface); border-radius:14px; padding:12px; box-shadow:var(--card-shadow); min-height:360px; }
-  .empty{ padding:36px 12px; color:var(--muted); text-align:center; }
+  .list-card{ margin-top:12px; background:var(--surface); border-radius:12px; padding:10px; box-shadow:var(--card-shadow); min-height:300px; }
+  .empty{ padding:24px 12px; color:var(--muted); text-align:center; }
 
   .tx-item{
-    background: linear-gradient(180deg, #fff, #fffbeb);
-    border-radius:12px;
-    padding:12px;
+    background: linear-gradient(180deg, #fff, #fff6e6);
+    border-radius:10px;
+    padding:10px;
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:12px;
-    margin-bottom:12px;
+    gap:10px;
+    margin-bottom:10px;
     border:1px solid rgba(11,18,20,0.04);
+    line-height:1.15; /* reduce spacing */
+    font-size:0.95rem; /* slightly smaller */
   }
   .tx-left{ flex:1; }
-  .tx-title{ font-weight:800; font-size:1.05rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
-  .tx-meta{ color:var(--muted); font-size:0.92rem; }
-  .tx-values{ margin-top:8px; color:var(--muted); font-size:0.92rem; line-height:1.5; }
+  .tx-title{ font-weight:800; font-size:1.02rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .tx-meta{ color:var(--muted); font-size:0.86rem; }
+  .tx-values{ margin-top:6px; color:var(--muted); font-size:0.9rem; line-height:1.2; } /* tighter */
 
-  .tx-right{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  .tx-right{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
   .btn-small{
     background:transparent;
     border:0;
     color:var(--danger);
     font-weight:700;
-    padding:8px 10px;
+    padding:6px 8px;
     border-radius:8px;
     cursor:pointer;
     box-shadow:none;
+    font-size:0.86rem;
   }
 
   /* Floating + */
@@ -107,19 +108,21 @@ const HTML_PAGE = `<!doctype html>
     position:fixed;
     right:18px;
     bottom:18px;
-    width:72px;
-    height:72px;
-    border-radius:14px;
+    width:66px;
+    height:66px;
+    border-radius:12px;
     background:var(--accent);
     display:flex;
     align-items:center;
     justify-content:center;
-    box-shadow: 0 14px 30px rgba(6,182,212,0.18);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.30); /* subtle black shadow */
     color:white;
     font-weight:800;
     font-size:34px;
     z-index:1200;
     cursor:pointer;
+    border:0; /* remove outline */
+    outline: none;
   }
 
   /* Modal form */
@@ -136,46 +139,48 @@ const HTML_PAGE = `<!doctype html>
     background:rgba(7,10,15,0.28);
   }
   .modal{
-    width:calc(100% - 40px);
+    width:calc(100% - 36px);
     max-width:520px;
     background:var(--accent);
-    border-radius:14px 14px 10px 10px;
-    padding:14px;
+    border-radius:12px 12px 10px 10px;
+    padding:12px;
     box-sizing:border-box;
-    margin-bottom:20px; /* sits above keyboard */
+    margin-bottom:14px; /* sits above keyboard */
     box-shadow:0 10px 28px rgba(6,182,212,0.18);
   }
-  .form-field{ background:#fff; border-radius:10px; padding:12px; margin-bottom:10px; display:flex; align-items:center; gap:10px; border:1px solid rgba(0,0,0,0.04); }
+  .modal h3{ margin:0 0 8px 0; text-align:center; color:#053047; font-weight:800; font-size:1.02rem; }
+
+  .form-field{ background:#fff; border-radius:10px; padding:10px; margin-bottom:8px; display:flex; align-items:center; gap:10px; border:1px solid rgba(0,0,0,0.04); }
   .form-field input[type="text"], .form-field input[type="number"]{
-    border:0; outline:none; font-size:15px; flex:1; background:transparent;
+    border:0; outline:none; font-size:14px; flex:1; background:transparent;
+    padding:6px 4px;
   }
   .form-actions{ display:flex; gap:10px; justify-content:center; margin-top:6px; }
   .btn-main{
-    background:#0369a1; color:#fff; border:0; padding:10px 18px; border-radius:10px; font-weight:800; cursor:pointer; min-width:120px;
+    background:#0369a1; color:#fff; border:0; padding:10px 18px; border-radius:10px; font-weight:800; cursor:pointer; min-width:110px;
+    font-size:0.95rem;
   }
-  .btn-cancel{ background:transparent; color:#083344; border:2px solid rgba(0,0,0,0.06); padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:700; }
+  .btn-cancel{ background:transparent; color:#053047; border:2px solid rgba(0,0,0,0.06); padding:8px 14px; border-radius:10px; cursor:pointer; font-weight:700; font-size:0.92rem; }
 
   /* responsive tweaks */
   @media (max-width:420px){
-    .fab{ width:64px; height:64px; font-size:30px; right:12px; bottom:12px; border-radius:12px; }
-    .modal{ width:calc(100% - 30px); margin-bottom:12px; padding:12px; border-radius:12px; }
+    .fab{ width:62px; height:62px; font-size:30px; right:12px; bottom:12px; border-radius:10px; }
+    .modal{ width:calc(100% - 28px); margin-bottom:10px; padding:12px; border-radius:10px; }
   }
 </style>
 </head>
 <body>
   <div class="wrap" id="app">
     <header class="summary" aria-hidden="false">
-      <div class="summary-left">
-        <ul class="sum-list" id="summaryList">
-          <li><span class="sum-label">Total modal</span> : <span class="sum-number" id="totalModal">0</span></li>
-          <li><span class="sum-label">Total penjualan.</span> : <span class="sum-number" id="totalJual">0</span></li>
-          <li><span class="sum-label">Total Keuntungan</span> : <span class="sum-number" id="totalUntung">0</span></li>
-        </ul>
+      <div class="summary-grid">
+        <div class="sum-row"><div class="sum-label">Total modal</div><div class="sum-number" id="totalModal">0</div></div>
+        <div class="sum-row"><div class="sum-label">Total penjualan</div><div class="sum-number" id="totalJual">0</div></div>
+        <div class="sum-row"><div class="sum-label">Total Keuntungan</div><div class="sum-number" id="totalUntung">0</div></div>
       </div>
     </header>
 
     <section class="list-card" id="listCard" aria-live="polite">
-      <ol id="txList" style="list-style:none; padding:0; margin:0;"></ol>
+      <ol id="txList" style="list-style:none; padding:8px; margin:0;"></ol>
       <div id="emptyHint" class="empty">Belum ada catatan penjualan. Tekan tombol <strong>+</strong> untuk menambah transaksi.</div>
     </section>
   </div>
@@ -186,7 +191,7 @@ const HTML_PAGE = `<!doctype html>
   <!-- Modal -->
   <div class="modal-wrap" id="modalWrap" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
-      <div style="text-align:center; margin-bottom:6px; color:#053047; font-weight:800;">Tambah Transaksi</div>
+      <h3>Tambah Transaksi</h3>
 
       <div class="form-field">
         <input id="fName" type="text" placeholder="Tulis jenis barang" autocomplete="off" />
@@ -240,7 +245,6 @@ function saveAll(){
 
 function moneyFormat(n){
   if (n === null || n === undefined || isNaN(Number(n))) return '0';
-  // Indonesian locale formatting, no decimals if integer else shows up to 2 decimals
   const num = Number(n);
   return num.toLocaleString('id-ID');
 }
@@ -258,14 +262,14 @@ function render(){
       const right = document.createElement('div'); right.className = 'tx-right';
 
       const title = document.createElement('div'); title.className = 'tx-title';
-      const name = document.createElement('div'); name.textContent = (idx+1) + '. ' + it.name;
-      const date = document.createElement('div'); date.style.fontSize='0.86rem'; date.style.color='var(--muted)';
+      const name = document.createElement('div'); name.style.fontWeight='800'; name.style.lineHeight='1.05'; name.textContent = (idx+1) + '. ' + it.name;
+      const date = document.createElement('div'); date.style.fontSize='0.84rem'; date.style.color='var(--muted)'; date.style.textAlign='right';
       date.textContent = it.displayDate;
       title.appendChild(name);
       title.appendChild(date);
 
       const meta = document.createElement('div'); meta.className = 'tx-values';
-      meta.innerHTML = 
+      meta.innerHTML =
         '<div>Modal : <strong>' + moneyFormat(it.cost) + '</strong></div>' +
         '<div>Jual  : <strong>' + moneyFormat(it.sell) + '</strong></div>' +
         '<div>Keuntungan : <strong>' + moneyFormat(it.profit) + '</strong></div>';
@@ -278,7 +282,7 @@ function render(){
       delBtn.className = 'btn-small';
       delBtn.textContent = 'hapus transaksi';
       delBtn.addEventListener('click', function(){
-        if (!confirm('Hapus transaksi "' + it.name + '" ?')) return;
+        if (!confirm('Hapus transaksi \"' + it.name + '\" ?')) return;
         items.splice(idx,1); saveAll(); render();
       });
 
@@ -289,7 +293,7 @@ function render(){
       txList.appendChild(li);
     });
   }
-  // update totals
+  // update totals (right-aligned numbers handled by CSS)
   const totals = items.reduce((acc, it) => {
     acc.cost += Number(it.cost) || 0;
     acc.sell += Number(it.sell) || 0;
@@ -303,6 +307,8 @@ function render(){
 }
 
 function openForm(){
+  // hide FAB
+  fab.style.display = 'none';
   modalWrap.style.display = 'flex';
   modalWrap.setAttribute('aria-hidden','false');
   // clear fields
@@ -312,7 +318,7 @@ function openForm(){
   // focus input after slight delay so keyboard appears and modal sits above it
   setTimeout(()=> {
     fName.focus();
-    // on mobile try to scroll modal into view
+    // try to scroll modal into view (mobile)
     const rect = document.querySelector('.modal').getBoundingClientRect();
     if (rect) window.scrollTo({ top: Math.max(0, rect.top - 20), behavior: 'smooth' });
   }, 120);
@@ -321,12 +327,13 @@ function openForm(){
 function closeForm(){
   modalWrap.style.display = 'none';
   modalWrap.setAttribute('aria-hidden','true');
+  // show FAB again
+  fab.style.display = 'flex';
   // blur inputs to close keyboard
   try { fName.blur(); fSell.blur(); fCost.blur(); } catch(e){}
 }
 
 function formatDisplayDate(d){
-  // d is Date or timestamp
   const date = new Date(d);
   const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const day = String(date.getDate()).padStart(2,'0');
@@ -374,7 +381,6 @@ saveBtn.addEventListener('click', function(){
 
 window.addEventListener('load', function(){ render(); });
 
-/* optional: prevent page zoom/change size on double-tap - mobile browsers vary; we already set viewport user-scalable=no */
 </script>
 </body>
 </html>`;
