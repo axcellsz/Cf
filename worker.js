@@ -250,7 +250,7 @@ const HTML_PAGE = `<!doctype html>
         <div class="sum-right" id="totalJual">0</div>
       </div>
       <div class="summary-line">
-        <div class="sum-left">Total keuntungan</div>
+        <div class="sum-left">Total laba</div>
         <div class="sum-colon">:</div>
         <div class="sum-right" id="totalUntung">0</div>
       </div>
@@ -365,7 +365,7 @@ function render(){
       // values grid: labels left, values right, includes Waktu
       const meta = document.createElement('div'); meta.className = 'tx-values';
       // create rows
-      const labels = ['Modal', 'Jual', 'Keuntungan', 'Waktu'];
+      const labels = ['Modal', 'Jual', 'Laba', 'Waktu'];
       const vals = [ moneyDisplay(it.cost), moneyDisplay(it.sell), moneyDisplay(it.profit), it.displayDate ];
       for (let i=0;i<labels.length;i++){
         const lab = document.createElement('div'); lab.className='label'; lab.textContent = labels[i] + ' :';
