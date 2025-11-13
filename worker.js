@@ -256,7 +256,7 @@ const HTML_PAGE = `<!doctype html>
             <path d="M5 10V3h14v7"></path>
             <path d="M12 3v11"></path>
           </svg>
-          SIMPAN
+          SAVE
         </button>
 
         <button id="checkBtn" class="btn" title="CEK KUOTA (T2)">
@@ -264,7 +264,7 @@ const HTML_PAGE = `<!doctype html>
             <path d="M11 17l-4-4 6-6 4 4-6 6z"></path>
             <path d="M21 21l-4.35-4.35"></path>
           </svg>
-          CEK KUOTA
+          CHECK
         </button>
 
         <button id="deleteBtn" class="btn" title="HAPUS (T3)">
@@ -275,7 +275,7 @@ const HTML_PAGE = `<!doctype html>
             <path d="M14 11v6"></path>
             <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
           </svg>
-          HAPUS
+          DELETE
         </button>
       </div>
     </div>
