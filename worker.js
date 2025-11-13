@@ -365,7 +365,7 @@ function render(){
       // values grid: labels left, values right, includes Waktu
       const meta = document.createElement('div'); meta.className = 'tx-values';
       // create rows
-      const labels = ['Modal', 'Jual', 'Laba', 'Waktu'];
+      const labels = ['Harga modal', 'Harga Jual', 'Keuntungan', 'Waktu transaksi'];
       const vals = [ moneyDisplay(it.cost), moneyDisplay(it.sell), moneyDisplay(it.profit), it.displayDate ];
       for (let i=0;i<labels.length;i++){
         const lab = document.createElement('div'); lab.className='label'; lab.textContent = labels[i] + ' :';
