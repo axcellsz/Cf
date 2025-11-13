@@ -40,7 +40,6 @@ const HTML_PAGE = `<!doctype html>
     --muted: #6b7280;
     --text: #0f1720;
     --accent: #38bdf8; /* soft cyan */
-    --accent-2: #06b6d4; /* teal */
     --danger: #fb7185;
     --card-shadow: 0 8px 24px rgba(9,30,63,0.06);
     --radius: 12px;
@@ -64,7 +63,7 @@ const HTML_PAGE = `<!doctype html>
     left:0;
     right:0;
     z-index:1200;
-    background: linear-gradient(180deg, rgba(56,189,248,0.12), rgba(56,189,248,0.06));
+    background: #b3e9ff;
     padding:12px 16px;
     box-shadow: var(--card-shadow);
     border-bottom:2px solid rgba(0,0,0,0.08); /* underline */
@@ -131,13 +130,27 @@ const HTML_PAGE = `<!doctype html>
     gap:10px;
     margin-bottom:10px;
     border:1px solid rgba(11,18,20,0.04);
-    line-height:1.15; /* reduce spacing */
-    font-size:0.95rem; /* slightly smaller */
+    line-height:1.12; /* reduced spacing */
+    font-size:0.92rem; /* slightly smaller overall */
   }
   .tx-left{ flex:1; }
-  .tx-title{ font-weight:800; font-size:1.02rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .tx-title{ font-weight:800; font-size:1.00rem; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .tx-name{ font-weight:800; line-height:1.02; }
   .tx-meta{ color:var(--muted); font-size:0.86rem; }
-  .tx-values{ margin-top:6px; color:var(--muted); font-size:0.9rem; line-height:1.2; } /* tighter */
+
+  /* NEW: values grid - labels left, values right, includes Waktu as last row */
+  .tx-values{
+    display:grid;
+    grid-template-columns: 1fr auto;
+    column-gap:12px;
+    row-gap:6px;
+    align-items:center;
+    font-size:0.88rem; /* smaller per request */
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .tx-values .label{ text-align:left; font-weight:700; color:var(--muted); }
+  .tx-values .value{ text-align:right; font-weight:800; color:var(--text); min-width:80px; }
 
   .tx-right{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
   .btn-small{
@@ -218,6 +231,7 @@ const HTML_PAGE = `<!doctype html>
     .sum-right{ min-width:84px; font-size:0.92rem; }
     .modal{ width:calc(100% - 28px); margin-bottom:10px; padding:12px; border-radius:10px; }
     .fab{ width:62px; height:62px; font-size:30px; right:12px; bottom:12px; border-radius:10px; }
+    .tx-values{ font-size:0.82rem; }
   }
 </style>
 </head>
@@ -330,35 +344,39 @@ function render(){
     items.forEach((it, idx) => {
       const li = document.createElement('li');
       li.className = 'tx-item';
+
       const left = document.createElement('div'); left.className = 'tx-left';
       const right = document.createElement('div'); right.className = 'tx-right';
 
+      // title row: name on left, delete on right (time moved to values)
       const title = document.createElement('div'); title.className = 'tx-title';
-      const name = document.createElement('div'); name.style.fontWeight='800'; name.style.lineHeight='1.05'; name.textContent = (idx+1) + '. ' + it.name;
-      const date = document.createElement('div'); date.style.fontSize='0.84rem'; date.style.color='var(--muted)'; date.style.textAlign='right';
-      date.textContent = it.displayDate;
+      const name = document.createElement('div'); name.className = 'tx-name'; name.textContent = (idx+1) + '. ' + it.name;
       title.appendChild(name);
-      title.appendChild(date);
 
-      const meta = document.createElement('div'); meta.className = 'tx-values';
-      meta.innerHTML =
-        '<div>Modal : <strong>' + moneyDisplay(it.cost) + '</strong></div>' +
-        '<div>Jual  : <strong>' + moneyDisplay(it.sell) + '</strong></div>' +
-        '<div>Keuntungan : <strong>' + moneyDisplay(it.profit) + '</strong></div>';
-
-      left.appendChild(title);
-      left.appendChild(meta);
-
-      // right: delete button
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn-small';
-      delBtn.textContent = 'hapus transaksi';
-      delBtn.addEventListener('click', function(){
+      // delete button at right top
+      const delBtnTop = document.createElement('button');
+      delBtnTop.className = 'btn-small';
+      delBtnTop.textContent = 'hapus transaksi';
+      delBtnTop.addEventListener('click', function(){
         if (!confirm('Hapus transaksi \"' + it.name + '\" ?')) return;
         items.splice(idx,1); saveAll(); render();
       });
 
-      right.appendChild(delBtn);
+      // values grid: labels left, values right, includes Waktu
+      const meta = document.createElement('div'); meta.className = 'tx-values';
+      // create rows
+      const labels = ['Modal', 'Jual', 'Keuntungan', 'Waktu'];
+      const vals = [ moneyDisplay(it.cost), moneyDisplay(it.sell), moneyDisplay(it.profit), it.displayDate ];
+      for (let i=0;i<labels.length;i++){
+        const lab = document.createElement('div'); lab.className='label'; lab.textContent = labels[i] + ' :';
+        const val = document.createElement('div'); val.className='value'; val.textContent = vals[i];
+        meta.appendChild(lab);
+        meta.appendChild(val);
+      }
+
+      left.appendChild(title);
+      left.appendChild(meta);
+      right.appendChild(delBtnTop);
 
       li.appendChild(left);
       li.appendChild(right);
