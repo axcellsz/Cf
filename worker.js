@@ -225,7 +225,11 @@ const HTML_PAGE = `<!doctype html>
 </style>
 </head>
 <body>
-    <div class="result-box">
+
+  <div class="container">
+    <h1>Daftar pelanggan</h1>
+
+   <div class="result-box">
       <ol id="customerList" class="pelanggan"></ol>
       <div id="emptyHint" class="hint" style="margin-top:8px; color:var(--muted); font-size:0.88rem;">Belum ada pelanggan. Tambahkan lewat form di bawah.</div>
     </div>
