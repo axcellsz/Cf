@@ -269,7 +269,7 @@ const HTML_PAGE = `<!doctype html>
             <path d="M11 17l-4-4 6-6 4 4-6 6z"></path>
             <path d="M21 21l-4.35-4.35"></path>
           </svg>
-          CHECK
+          CHECK All
         </button>
 
         <button id="deleteBtn" class="btn" title="HAPUS (T3)">
