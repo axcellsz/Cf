@@ -44,6 +44,7 @@ const HTML_PAGE = `<!doctype html>
     --danger: #fb7185;
     --card-shadow: 0 8px 24px rgba(9,30,63,0.06);
     --radius: 12px;
+    --summary-height: 96px; /* reserved height for fixed summary */
   }
   html,body{
     height:100%;
@@ -56,36 +57,67 @@ const HTML_PAGE = `<!doctype html>
     font-size:14px;
   }
 
-  /* Layout */
-  .wrap{ max-width:820px; margin:12px auto 110px; padding:12px; box-sizing:border-box; }
+  /* Fixed summary at top */
   header.summary{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:1200;
     background: linear-gradient(180deg, rgba(56,189,248,0.12), rgba(56,189,248,0.06));
-    border-radius:12px; padding:10px 14px; display:block; box-shadow: var(--card-shadow);
-    border-bottom:3px solid rgba(0,0,0,0.06); /* underline / garis bawah */
+    padding:12px 16px;
+    box-shadow: var(--card-shadow);
+    border-bottom:2px solid rgba(0,0,0,0.08); /* underline */
   }
 
-  /* SUMMARY: single-line three columns, label left, number right (aligned) */
-  .summary-row{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    justify-content:space-between;
-    width:100%;
-    max-width:900px;
+  /* make sure main content doesn't go under fixed header */
+  .content-wrap{
+    padding-top: calc(var(--summary-height) + 12px); /* reserve space (summary height + gap) */
+    max-width:920px;
+    margin:0 auto;
+    padding-left:12px;
+    padding-right:12px;
     box-sizing:border-box;
   }
-  .summary-item{
+
+  /* SUMMARY: three lines, label left and number right aligned */
+  .summary-lines{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    max-width:900px;
+    margin:0 auto;
+  }
+  .summary-line{
     display:flex;
     align-items:center;
-    gap:10px;
-    min-width:0;
-    flex:1;
+    gap:12px;
+    justify-content:space-between;
   }
-  .sum-left{ flex:0 0 auto; color:var(--muted); font-weight:700; font-size:0.92rem; width:160px; }
-  .sum-colon{ color:var(--muted); font-weight:700; width:18px; text-align:center; }
-  .sum-right{ margin-left:auto; text-align:right; font-weight:900; color:var(--text); min-width:120px; font-size:0.95rem; }
+  .sum-left{
+    color:var(--muted);
+    font-weight:700;
+    font-size:0.95rem;
+    flex:0 0 220px; /* label column width */
+  }
+  .sum-colon{
+    color:var(--muted);
+    width:18px;
+    text-align:center;
+    flex:0 0 18px;
+  }
+  .sum-right{
+    text-align:right;
+    font-weight:900;
+    color:var(--text);
+    min-width:120px;
+    font-size:0.95rem;
+  }
 
   /* Card list */
+  .wrap-card{
+    margin-top:8px;
+  }
   .list-card{ margin-top:12px; background:var(--surface); border-radius:12px; padding:10px; box-shadow:var(--card-shadow); min-height:300px; }
   .empty{ padding:24px 12px; color:var(--muted); text-align:center; }
 
@@ -181,42 +213,43 @@ const HTML_PAGE = `<!doctype html>
 
   /* responsive tweaks */
   @media (max-width:420px){
-    .fab{ width:62px; height:62px; font-size:30px; right:12px; bottom:12px; border-radius:10px; }
+    :root{ --summary-height: 110px; }
+    .sum-left{ flex:0 0 140px; font-size:0.88rem; }
+    .sum-right{ min-width:84px; font-size:0.92rem; }
     .modal{ width:calc(100% - 28px); margin-bottom:10px; padding:12px; border-radius:10px; }
-    .sum-left{ width:120px; font-size:0.86rem; }
-    .sum-right{ font-size:0.9rem; min-width:80px; }
+    .fab{ width:62px; height:62px; font-size:30px; right:12px; bottom:12px; border-radius:10px; }
   }
 </style>
 </head>
 <body>
-  <div class="wrap" id="app">
-    <header class="summary" aria-hidden="false">
-      <!-- summary single-line: three items -->
-      <div class="summary-row">
-        <div class="summary-item">
-          <div class="sum-left">Total modal</div>
-          <div class="sum-colon">:</div>
-          <div class="sum-right" id="totalModal">0</div>
-        </div>
-
-        <div class="summary-item">
-          <div class="sum-left">Total penjualan</div>
-          <div class="sum-colon">:</div>
-          <div class="sum-right" id="totalJual">0</div>
-        </div>
-
-        <div class="summary-item">
-          <div class="sum-left">Total Keuntungan</div>
-          <div class="sum-colon">:</div>
-          <div class="sum-right" id="totalUntung">0</div>
-        </div>
+  <!-- Fixed summary -->
+  <header class="summary" aria-hidden="false">
+    <div class="summary-lines" role="region" aria-label="Ringkasan total">
+      <div class="summary-line">
+        <div class="sum-left">Total modal</div>
+        <div class="sum-colon">:</div>
+        <div class="sum-right" id="totalModal">0</div>
       </div>
-    </header>
+      <div class="summary-line">
+        <div class="sum-left">Total penjualan</div>
+        <div class="sum-colon">:</div>
+        <div class="sum-right" id="totalJual">0</div>
+      </div>
+      <div class="summary-line">
+        <div class="sum-left">Total keuntungan</div>
+        <div class="sum-colon">:</div>
+        <div class="sum-right" id="totalUntung">0</div>
+      </div>
+    </div>
+  </header>
 
-    <section class="list-card" id="listCard" aria-live="polite">
-      <ol id="txList" style="list-style:none; padding:8px; margin:0;"></ol>
-      <div id="emptyHint" class="empty">Belum ada catatan penjualan. Tekan tombol <strong>+</strong> untuk menambah transaksi.</div>
-    </section>
+  <div class="content-wrap">
+    <div class="wrap-card">
+      <section class="list-card" id="listCard" aria-live="polite">
+        <ol id="txList" style="list-style:none; padding:8px; margin:0;"></ol>
+        <div id="emptyHint" class="empty">Belum ada catatan penjualan. Tekan tombol <strong>+</strong> untuk menambah transaksi.</div>
+      </section>
+    </div>
   </div>
 
   <!-- Floating add -->
@@ -282,7 +315,6 @@ function moneyDisplay(n){
   if (n === null || n === undefined || isNaN(Number(n))) return '0';
   const num = Number(n);
   if (Number.isInteger(num)) {
-    // use Indonesian thousand separator (dot)
     return num.toLocaleString('id-ID').replace(/,/g, '.');
   } else {
     return num.toFixed(2);
