@@ -1,4 +1,4 @@
-// worker.js (FINAL - UI polished, localStorage persistence, extract remaining + expDate)
+// worker.js (FINAL - dengan tombol CEK per baris)
 // DEV only: credentials embedded for learning/testing only.
 
 const AUTH_BASIC = 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw';
@@ -216,6 +216,11 @@ const HTML_PAGE = `<!doctype html>
   }
   .btn svg{ width:14px; height:14px; opacity:0.95; }
 
+  /* small variant untuk tombol per-row */
+  .btn.small{ min-width:56px; padding:6px 8px; font-size:0.85rem; border-radius:6px; box-shadow:none; }
+
+  .row-actions{ display:flex; gap:8px; align-items:center; }
+
   @media (max-width:640px){
     .bar-inner{ flex-direction:column; align-items:stretch; gap:8px; }
     .btn{ width:100%; }
@@ -309,40 +314,51 @@ function renderList(){
   customers.forEach((c, idx) => {
     const li = document.createElement('li');
     li.className = 'customer-row';
+
     const left = document.createElement('div');
     left.className = 'cust-left';
     const meta = document.createElement('div');
-    const nameEl = document.createElement('div');
-    nameEl.className = 'cust-name';
-    nameEl.textContent = (idx+1) + '.  ' + c.name;
-    const phoneEl = document.createElement('div');
-    phoneEl.className = 'cust-phone';
-    phoneEl.textContent = c.phone;
-    meta.appendChild(nameEl);
-    meta.appendChild(phoneEl);
-    left.appendChild(meta);
+    const nameEl = document.createElement('div'); nameEl.className = 'cust-name'; nameEl.textContent = (idx+1) + '.  ' + c.name;
+    const phoneEl = document.createElement('div'); phoneEl.className = 'cust-phone'; phoneEl.textContent = c.phone;
+    meta.appendChild(nameEl); meta.appendChild(phoneEl); left.appendChild(meta);
 
-    // extra line for quota summary (if any)
     if (c.lastResult && c.lastResult.summary) {
-      const extra = document.createElement('div');
-      extra.className = 'cust-extra';
-      // highlight quota number with green bold
+      const extra = document.createElement('div'); extra.className = 'cust-extra';
       extra.innerHTML = highlightQuota(c.lastResult.summary);
       left.appendChild(extra);
     }
 
     const right = document.createElement('div');
+    right.style.display = 'flex';
+    right.style.alignItems = 'center';
+    right.style.gap = '8px';
+
+    // per-row CEK button + status badge
+    const rowActions = document.createElement('div'); rowActions.className = 'row-actions';
+
+    const cekBtn = document.createElement('button');
+    cekBtn.className = 'btn small';
+    cekBtn.textContent = 'CEK';
+    cekBtn.title = 'CEK nomor ini';
+    cekBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      checkSingleCustomer(idx);
+    });
+    rowActions.appendChild(cekBtn);
+
     if (c.lastResult && c.lastResult.status) {
       const b = document.createElement('span');
       b.className = 'badge ' + (c.lastResult.ok ? 'ok' : 'err');
       b.textContent = c.lastResult.status;
-      right.appendChild(b);
+      rowActions.appendChild(b);
     } else {
       const b = document.createElement('span');
       b.className = 'small';
       b.textContent = 'Belum dicek';
-      right.appendChild(b);
+      rowActions.appendChild(b);
     }
+
+    right.appendChild(rowActions);
 
     li.appendChild(left);
     li.appendChild(right);
@@ -355,7 +371,7 @@ renderList();
 
 function validatePhone(p){
   if (!p) return 'Nomor kosong';
-  const cleaned = p.replace(/\s|\-/g, '');
+  const cleaned = p.replace(/\\s|\\-/g, '');
   if (!/^[+0-9]{6,15}$/.test(cleaned)) return 'Format nomor tidak valid';
   return null;
 }
@@ -391,54 +407,16 @@ function buildSummaryFromData(data, resp) {
   }
 }
 
-// CEK KUOTA
+// CEK ALL (tombol bar)
 checkBtn.addEventListener('click', async function () {
   if (!customers || customers.length === 0) { showToast('Belum ada pelanggan'); return; }
   showToast('Memeriksa semua...');
   checkBtn.disabled = true;
   try {
     for (var i = 0; i < customers.length; i++) {
-      var c = customers[i];
-      c.lastResult = { status: 'checking', ok: false, summary: 'memeriksa...' };
-      renderList();
-
-      try {
-        var url = new URL(location.href);
-        url.pathname = '/cek';
-        url.searchParams.set('msisdn', c.phone);
-
-        var resp = await fetch(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' });
-        var data;
-        var ct = resp.headers.get('content-type') || '';
-        if (ct.indexOf('application/json') !== -1) {
-          data = await resp.json();
-        } else {
-          var txt = await resp.text();
-          try { data = JSON.parse(txt); } catch(e) { data = txt; }
-        }
-
-        // extract remaining & expDate
-        var quotaObj = extractQuota(data);
-        var summaryText;
-        if (quotaObj && typeof quotaObj === 'object' && quotaObj.remaining) {
-          summaryText = 'Sisa ' + quotaObj.remaining + (quotaObj.expDate ? ' — Aktif s.d ' + quotaObj.expDate : '');
-        } else if (typeof quotaObj === 'string') {
-          summaryText = 'Sisa ' + quotaObj;
-        } else {
-          summaryText = buildSummaryFromData(data, resp);
-        }
-
-        c.lastResult = {
-          status: resp.ok ? 'OK' : 'ERR ' + resp.status,
-          ok: resp.ok,
-          summary: summaryText
-        };
-      } catch (err) {
-        c.lastResult = { status: 'ERR', ok: false, summary: String(err).slice(0,120) };
-      }
-
-      saveCustomers();
-      renderList();
+      // gunakan fungsi inner untuk cek satu customer
+      await checkCustomerByIndex_inner(i);
+      // delay ringan untuk mengurangi kemungkinan memicu rate limit
       await new Promise(function(r){ setTimeout(r, 380); });
     }
     showToast('Selesai');
@@ -448,6 +426,59 @@ checkBtn.addEventListener('click', async function () {
     checkBtn.disabled = false;
   }
 });
+
+// fungsi inner yang mengecek satu nomor dan update customers[i]
+async function checkCustomerByIndex_inner(i) {
+  if (!customers[i]) return;
+  const c = customers[i];
+  // set checking state
+  c.lastResult = { status: 'checking', ok: false, summary: 'memeriksa...' };
+  renderList();
+
+  try {
+    var url = new URL(location.href);
+    url.pathname = '/cek';
+    url.searchParams.set('msisdn', c.phone);
+
+    var resp = await fetch(url.toString(), { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+    var data;
+    var ct = resp.headers.get('content-type') || '';
+    if (ct.indexOf('application/json') !== -1) {
+      data = await resp.json();
+    } else {
+      var txt = await resp.text();
+      try { data = JSON.parse(txt); } catch(e) { data = txt; }
+    }
+
+    var quotaObj = extractQuota(data);
+    var summaryText;
+    if (quotaObj && typeof quotaObj === 'object' && quotaObj.remaining) {
+      summaryText = 'Sisa ' + quotaObj.remaining + (quotaObj.expDate ? ' — Aktif s.d ' + quotaObj.expDate : '');
+    } else if (typeof quotaObj === 'string') {
+      summaryText = 'Sisa ' + quotaObj;
+    } else {
+      summaryText = buildSummaryFromData(data, resp);
+    }
+
+    c.lastResult = {
+      status: resp.ok ? 'OK' : 'ERR ' + resp.status,
+      ok: resp.ok,
+      summary: summaryText
+    };
+  } catch (err) {
+    c.lastResult = { status: 'ERR', ok: false, summary: String(err).slice(0,120) };
+  }
+
+  saveCustomers();
+  renderList();
+}
+
+// wrapper dipakai oleh tombol per-row
+async function checkSingleCustomer(index) {
+  if (typeof index !== 'number' || index < 0 || index >= customers.length) return;
+  // langsung panggil inner (tanpa delay tambahan)
+  await checkCustomerByIndex_inner(index);
+}
 
 // HAPUS (by name)
 deleteBtn.addEventListener('click', function () {
