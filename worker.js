@@ -234,20 +234,18 @@ const HTML_PAGE = `<!doctype html>
       <div id="emptyHint" class="hint" style="margin-top:8px; color:var(--muted); font-size:0.88rem;">Belum ada pelanggan. Tambahkan lewat form di bawah.</div>
     </div>
 
-    <p style="margin-top:12px; color:var(--muted); font-size:0.86rem;">Catatan: contoh ini hanya untuk pembelajaran — kredensial dimasukkan di worker (dev).</p>
+    <p style="margin-top:12px; color:var(--muted); font-size:0.86rem;">Axstore</p>
   </div>
 
   <div class="bottom-bar" role="region" aria-label="Kontrol utama">
     <div class="bar-inner">
       <div class="inputs">
         <div class="field" style="flex:1; min-width:0">
-          <label for="msisdnInput">Nomor</label>
-          <input id="msisdnInput" type="tel" placeholder="Contoh: 6281234567890" inputmode="tel" />
+          <input id="msisdnInput" type="tel" placeholder="Nomor xl" inputmode="tel" />
         </div>
 
         <div class="field" style="width:170px; max-width:34%;">
-          <label for="nameInput">Nama</label>
-          <input id="nameInput" type="text" placeholder="Nama pelanggan" />
+          <input id="nameInput" type="text" placeholder="Nama" />
         </div>
       </div>
 
