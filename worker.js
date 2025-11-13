@@ -227,7 +227,7 @@ const HTML_PAGE = `<!doctype html>
 <body>
 
   <div class="container">
-    <h1>Daftar pelanggan</h1>
+    <h1>User inject vpn</h1>
 
    <div class="result-box">
       <ol id="customerList" class="pelanggan"></ol>
